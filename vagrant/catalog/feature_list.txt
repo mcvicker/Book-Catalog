@@ -1,0 +1,9 @@
+1. Verify all basic crud operations.
+2. Add additional functionality: more fields.
+3. Login/Oauth: Google
+4. Oauth: Facebook
+5. Oauth: Amazon
+6. photos
+7. Auto-import from google books
+8. UI facelift. 
+9. code cleanup - pep 8 and verify everything

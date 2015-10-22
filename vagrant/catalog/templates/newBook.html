@@ -1,0 +1,54 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+	<div class="row divider green">
+		<div class="col-md-12"></div>
+	</div>
+	<div class="row banner menu">
+		<div class="col-md-11 col-md-offset-1 padding-none">
+			<h1>New Book</h1>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6 col-md-offset-1 padding-top">
+			<form action="#" method = "post">
+				<div class="form-group">
+					<label for="title">Title:</label>
+					<input type ="text" maxlength="50" class="form-control" name="title" placeholder="Title of the book">
+                    
+                    <label for="author">Author:</label>
+					<input type ="text" maxlength="50" class="form-control" name="author" placeholder="Author of the book">
+                    
+                    <label for="isbn">ISBN:</label>
+					<input type ="text" maxlength="50" class="form-control" name="isbn" placeholder="ISBN of the book">
+                    
+					<label for="description">Description:</label>
+					<textarea class="form-control" maxlength="250" rows="3" name="description" placeholder="Book Description"></textarea>
+                    
+                    <label for="published">Published Date:</label>
+					<input type ="text" maxlength="10" class="form-control" name="published" placeholder="YYYY">
+                    
+					<label for="price">Price:</label>
+					<div class="input-group">
+						<div class="input-group-addon">$</div>
+						<input type ="text" class="form-control" maxlength="10" name="price" placeholder="Price in $">
+					</div>
+					<label for="fiction">Fiction:</label>
+					<div class="radio">
+					  <label>
+					    <input type="radio" name="fiction" id="Fiction" value="True">Fiction
+					  </label>
+					</div>
+					<div class="radio">
+					  <label>
+					    <input type="radio" name="fiction" id="non-Fiction" value="False">Non-Fiction
+					  </label>
+					</div>
+					<button type="submit" class="btn btn-default" id="submit" type="submit">
+					<span class="glyphicon glyphicon-glass" aria-hidden="true"></span>Create</button>
+				</div>
+			</form>
+		</div>
+	</div>
+{% endblock %}
+

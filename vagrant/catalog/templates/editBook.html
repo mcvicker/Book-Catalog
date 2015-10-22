@@ -1,0 +1,58 @@
+{% extends "main.html" %}
+{% block content %}
+{% include "header.html" %}
+	<div class="row divider green">
+		<div class="col-md-12"></div>
+	</div>
+	<div class="row banner menu">
+		<div class="col-md-11 col-md-offset-1 padding-none">
+			<h1>Edit Book</h1>
+		</div>
+	</div>
+	<div class="row">
+		<div class="col-md-6 col-md-offset-1 padding-top">
+			<form action="#" method = "post">
+				<div class="form-group">
+					<label for="title">Title:</label>
+					<input type ="text" maxlength="100" class="form-control" name="title" value="{{book.title }}">
+                    
+                    <label for="author">Author:</label>
+                    <input type ="text" maxlength="50" class="form-control" name="author" value="{{book.author}}">
+					
+                    <label for="description">Description:</label>
+					<textarea class="form-control" maxlength="250" rows="3" name="description">{{book.description}}</textarea>
+                    
+                    <label for="isbn">ISBN:</label>
+					<input type ="text" maxlength="50" class="form-control" name="isbn" value={{book.isbn}}>
+                    
+                    <label for="published">Published Date:</label>
+					<input type ="text" maxlength="10" class="form-control" name="published" value={{book.published}}>
+                    
+					<label for="price">Price:</label>
+					<div class="input-group">
+						<div class="input-group-addon">{{book.price}}</div>
+						<input type ="text" maxlength="10" class="form-control" name="price" value="{{book.price}}">               
+                       
+					</div>
+					<label for="fiction">Fiction:</label>
+					<div class="radio">
+					  <label>
+					    <input type="radio" name="fiction" id="fiction" value="True" {% if book.fiction == 'True'%}checked{%endif%}>Fiction
+					  </label>
+					</div>
+					<div class="radio">
+					  <label>
+					    <input type="radio" name="fiction" id="nonfiction" value="False" {% if book.fiction == 'False' %}checked{%endif%}>NonFiction
+					  </label>
+					</div>
+					<button type="submit" class="btn btn-default" id="submit" type="submit">
+					<span class="glyphicon glyphicon-ok" aria-hidden="true"></span>Save</button>
+					<a href = '{{url_for('showCategory')}}'>
+						<button class="btn btn-default delete">
+						<span class="glyphicon glyphicon-remove" aria-hidden="true"></span> Cancel</button>
+					</a>
+				</div>
+			</form>
+		</div>
+	</div>
+{% endblock %}
