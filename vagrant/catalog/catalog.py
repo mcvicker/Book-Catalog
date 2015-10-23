@@ -1,10 +1,12 @@
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
+from werkzeug import secure_filename
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Category, Book, User
 from flask import session as login_session 
 import random
 import string
+import os
 
 
 from oauth2client.client import flow_from_clientsecrets
@@ -14,7 +16,12 @@ import json
 from flask import make_response
 import requests
 
+APPLICATION_NAME = "Book Catalog"
+UPLOAD_FOLDER = '/vagrant/catalog/static/images'
+ALLOWED_EXTENSIONS = set(['png', 'jpg', 'gif'])
+
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Connect to Database and create database session
 engine = create_engine('sqlite:///bookcatalog.db')
@@ -23,8 +30,33 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind = engine)
 session = DBSession()
 
-APPLICATION_NAME = "Book Catalog"
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+@app.route('/testupload/', methods=['GET','POST'])
+def upload_file():
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            return redirect(url_for('uploaded_file', filename=filename))
+    return '''
+    <!doctype html>
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form action="" method=post enctype=multipart/form-data>
+        <p><input type=file name=file>
+            <input type=submit value=Upload>
+    </form>
+    '''
+    
+@app.route('/images/<filename>')
+def uploaded_file(filename):
+    return render_template('uploadedFile.html', filename = filename)
+    
+    
 #JSON APIs to view Book Information
 @app.route('/category/<int:category_id>/books/JSON')
 def bookCategoryJSON(category_id):
@@ -137,6 +169,8 @@ def newBook(category_id):
         return redirect(url_for('showCategory', category_id = category_id))
     else:
             return render_template('newBook.html')
+            
+
 
 # prettify this -- use a template
 @app.route('/category/<int:category_id>/book/<int:book_id>/')
@@ -159,6 +193,8 @@ def showBook(category_id, book_id):
     output += str(book.fiction)
     output += "<br>"
     output += str(book.published)
+    output += "<br>"
+    output += book.picture
     """
         # Need to declare fiction as a bool but bool not supported by sqlite.
         category_id = Column(Integer,ForeignKey('category.id'))
