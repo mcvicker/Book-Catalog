@@ -13,7 +13,7 @@ class User(Base):
         id = Column(Integer, primary_key=True)
         name = Column(String(250), nullable=False)
         email = Column(String(250), nullable=False)
-        picture = Column(String(250))
+        image = Column(String(250))
         
         @property
         def serialize(self):
@@ -22,7 +22,7 @@ class User(Base):
                 'id'        : self.id,
                 'name'      : self.name,
                 'email'     : self.email,
-                'picture'   : self.picture,
+                'image'   : self.image,
                 }
             
 class Category(Base):
@@ -42,14 +42,7 @@ class Category(Base):
                 'id'        : self.id,
                 }
                 
-class Image(Base):
-        __tablename__ = 'image'
-        
-        name = Column(String(80), nullable = False)
-        id = Column(Integer, primary_key = True)
-        blob = Column(Binary)
-        
-        
+   
 class Book(Base):
         __tablename__ = 'book'
         
@@ -65,7 +58,7 @@ class Book(Base):
         user_id = Column(Integer,ForeignKey('user.id'))
         user = relationship(User)
         published = Column(String(4), nullable = True)
-        image = Column(Integer,ForeignKey('image.id'))
+        image = Column(String(250))
         
 
         

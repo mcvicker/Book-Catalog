@@ -16,6 +16,7 @@ import json
 from flask import make_response
 import requests
 
+# set up and configure application
 APPLICATION_NAME = "Book Catalog"
 UPLOAD_FOLDER = '/vagrant/catalog/static/images'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'gif'])
@@ -30,6 +31,7 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind = engine)
 session = DBSession()
 
+# check uploaded files for allowed file types
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
@@ -55,7 +57,35 @@ def upload_file():
 @app.route('/images/<filename>')
 def uploaded_file(filename):
     return render_template('uploadedFile.html', filename = filename)
-    
+
+#going to have to rewrite this to show proof of concept.    
+@app.route('/category/<int:category_id>/book/<int:book_id>/addimage',methods=['GET','POST'])
+def upload_image(category_id, book_id):
+    category = session.query(Category).filter_by(id = category_id).one()
+    editedBook = session.query(Book).filter_by(id = book_id).one()
+    if request.method == 'POST':
+        file = request.files['file']
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(path)
+            newImage = Image(path = path, name = file.filename)
+            session.add(newImage)
+            session.commit
+            newImage = session.query(Image).filter_by(path = path).one()
+            editedBook.image = newImage.id
+            session.add(editedBook)
+            session.commit
+            return redirect(url_for('showBook', category_id = category_id, book_id = book_id))
+    return '''
+    <!doctype html>
+    <title>Upload new File</title>
+    <h1>Upload new File</h1>
+    <form action="" method=post enctype=multipart/form-data>
+        <p><input type=file name=file>
+            <input type=submit value=Upload>
+    </form>
+    ''' 
     
 #JSON APIs to view Book Information
 @app.route('/category/<int:category_id>/books/JSON')
@@ -184,7 +214,7 @@ def showBook(category_id, book_id):
     output += "<br>"
     output += str(book.id)
     output += "<br>"
-    output += str(book.description)
+    output += book.description
     output += "<br>"
     output += str(book.price)
     output += "<br>"
@@ -194,7 +224,7 @@ def showBook(category_id, book_id):
     output += "<br>"
     output += str(book.published)
     output += "<br>"
-    output += book.picture
+    output += str(book.image)
     """
         # Need to declare fiction as a bool but bool not supported by sqlite.
         category_id = Column(Integer,ForeignKey('category.id'))
@@ -203,7 +233,7 @@ def showBook(category_id, book_id):
         published = Column(String(4), nullable = True)
         image = Column(Integer,ForeignKey('image.id'))
     """    
-    return output
+    return render_template('book.html', category = category, book = book)
     
 @app.route('/category/<int:category_id>/book/<int:book_id>/edit/', methods=['GET', 'POST'])    
 def editBook(category_id, book_id):
@@ -224,6 +254,14 @@ def editBook(category_id, book_id):
             editedBook.isbn = request.form['isbn']
         if request.form['published']:
             editedBook.published = request.form['published']
+        if request.files['file']:
+            file = request.files['file']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(path)
+                dbpath = path.replace("/vagrant/catalog","")
+                editedBook.image = dbpath
         session.add(editedBook)
         session.commit() 
         flash('Book Successfully Edited')
