@@ -60,8 +60,7 @@
 						
 							<div class="menu-item">
 								<h3><a href="{{url_for('showBook', category_id = category.id, book_id=i.id)}}">{{i.title}}</a></h3>
-								<p>{{i.description}}</p>
-								<p class="menu-price">{{i.price}}</p>
+								<p><img src="{{i.image}}" alt="{{i.title}}"></p>
 								<a href='{{url_for('editBook', category_id = category.id, book_id=i.id ) }}'>Edit</a> | 
 								<a href='{{url_for('deleteBook', category_id = category.id, book_id=i.id ) }}'>Delete</a>
 							</div>

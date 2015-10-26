@@ -1,0 +1,52 @@
+<html>
+<head>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
+    </script>
+    <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer>
+    </script>
+    
+</head>
+
+<body>
+
+<div id="signinButton">
+    <span class="g-signin"
+        data-scope="openid email"
+        data-clientid="750608331471-bpfc200kk4s6cjm5om3njl828kp495jh.apps.googleusercontent.com"
+        data-redirecturi="postmessage"
+        data-accesstype="offline"
+        data-cookiepolicy="single_host_origin"
+        data-callback="signInCallback"
+        data-approvalprompt="force">
+    </span>
+</div>
+<div id="result"></div>
+
+<script>
+function signInCallback(authResult) {
+    if (authResult['code']) {
+    // Hide the sign-in button now that the user is authorized,
+    $('#signinButton').attr('style', 'display: none);)
+    // Send the one-time use-code to the server. If the server responsd, write a 'login successful' message to the web page and redirect back to the main page
+    $.ajax({
+        type: 'POST', 
+        url: '/gconnect?state={{STATE}}',
+        processData: false,
+        contentType: 'application/octet-stream; charset=utf-8',
+        data: authResult['code'],
+        success: function(result) {
+            if (result) {
+                $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
+            setTimeout(function() {
+                window.location.href = "/category";
+            }, 4000);
+            } else if (authResult['error']) {
+            console.log('There was an error: ' + authResult['error']);
+            }
+        }   
+    })
+    }
+}
+</body>
+
+</html>

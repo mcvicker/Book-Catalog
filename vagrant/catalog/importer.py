@@ -52,7 +52,7 @@ for index, item in enumerate(bindings, start = 1):
     session.add(category)
     session.commit()
     completed = Decimal(index/len(bindings)*100).quantize(Decimal('.01'))
-    print item + " imported... " + str(completed) + "% complete"
+    print item + " imported... Stage One of Two " + str(completed) + "% complete"
     
 # I don't believe that this import process is optimized. Likely there is a better way to batch 
 # web requests to google as well as database writes. Potentially read everything into
@@ -94,5 +94,5 @@ with open('My_Shelfari_Books.tsv','rb') as tsvfile:
         session.commit()
         # we reuse the allrows variable to determine the percentage completed
         completed = Decimal(index/len(allrows)*100).quantize(Decimal('.01'))
-        print "\"" + title + "\"" + " imported... " + str(completed) + "% complete"
+        print "\"" + title + "\"" + " imported... Stage Two of Two " + str(completed) + "% complete"
         # need to build error message for exceeding the limit
