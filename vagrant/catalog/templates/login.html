@@ -2,7 +2,7 @@
 <head>
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js">
     </script>
-    <script src="https://apis.google.com/js/client:platform.js?onload=start" async defer>
+    <script src="//apis.google.com/js/client:platform.js?onload=start">
     </script>
     
 </head>
@@ -26,8 +26,8 @@
 function signInCallback(authResult) {
     if (authResult['code']) {
     // Hide the sign-in button now that the user is authorized,
-    $('#signinButton').attr('style', 'display: none);)
-    // Send the one-time use-code to the server. If the server responsd, write a 'login successful' message to the web page and redirect back to the main page
+    $('#signinButton').attr('style', 'display: none');
+    // Send the one-time use-code to the server. If the server responds, write a 'login successful' message to the web page and redirect back to the main page
     $.ajax({
         type: 'POST', 
         url: '/gconnect?state={{STATE}}',
@@ -42,11 +42,14 @@ function signInCallback(authResult) {
             }, 4000);
             } else if (authResult['error']) {
             console.log('There was an error: ' + authResult['error']);
-            }
+            } else {
+                $('#result').html('Failed to make a server-side call. Check your configuration and console.');
+                }
         }   
-    })
+    });
     }
 }
+</script>
 </body>
 
 </html>

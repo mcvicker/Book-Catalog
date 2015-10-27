@@ -17,6 +17,8 @@ from flask import make_response
 import requests
 
 # set up and configure application, upload loactaions and allowed upload locations. 
+CLIENT_ID = json.loads(
+    open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Book Catalog"
 UPLOAD_FOLDER = '/vagrant/catalog/static/images'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'gif'])
@@ -65,8 +67,7 @@ def uploaded_file(filename):
 def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
     login_session['state'] = state
-    return render_template("login.html")
-    
+    return render_template("login.html", STATE=state)       
 # Google Plus OAuth2 code
 
 @app.route('/gconnect', methods=['POST'])
@@ -75,18 +76,19 @@ def gconnect():
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
-        return reponse
+        return response
     # Obtain authorization code
     code = request.data
     
     try:
         # Upgrade the authorization code into a credentials object
-        oauth_flow = flow_from_clientsecrets.json('client_secrets.json', scope='')
+        oauth_flow = flow_from_clientsecrets('client_secrets.json', scope='')
         oauth_flow.redirect_uri = 'postmessage'
         credentials = oauth_flow.step2_exchange(code)
     except FlowExchangeError:
         response = make_response(json.dumps('Failed to upgrade the authorization code.'), 401)
         response.headers['Content-Type'] = 'application/json'
+        return response
         
     # Check that the access token is valid.
     access_token = credentials.access_token
@@ -94,10 +96,10 @@ def gconnect():
     h = httplib2.Http()
     result = json.loads(h.request(url, 'GET')[1])
     # If there was an error in the access token info, abort.
-    if reult.get('error') is not none:
+    if result.get('error') is not None:
         reponse = make_response(json.dumps(result.get('error')), 500)
         reponse.headers['Content-Type'] = 'application/json'
-        
+        return response
     # Verify that the access token is used for the intended user.
     gplus_id = credentials.id_token['sub']
     if result['user_id'] != gplus_id:
@@ -107,16 +109,25 @@ def gconnect():
         return reponse
     # Verify that the access token is valid for this application.
     if result['issued_to'] != CLIENT_ID:
-        reponse = make_respons(
+        reponse = make_response(
             json.dumps("Token's client ID does not match app's."), 401)
+        response.headers['Content-Type'] = 'application/json'
         print "Token's client ID does not match app's."
+        return response
+        
+       # Check to see if user is already logged in
+    stored_credentials = login_session.get('credentials')
+    stored_gplus_id = login_session.get('gplus_id')
+    if stored_credentials is not None and gplus_id == stored_gplus_id:
+        response = make_response(json.dumps('Current user is already connected.'), 200)
         response.headers['Content-Type'] = 'application/json'
         return response
+    
     # Store the access token in the session for later use.
-    login_session['credentials'] = credentials
+    login_session['credentials'] = credentials.access_token
     login_session['gplus_id'] = gplus_id
 
-        # Get user info
+    # Get user info
     userinfo_url = "https://www.googleapis.com/oauth2/v1/userinfo"
     params = {'access_token' : credentials.access_token, 'alt': 'json'}
     answer = requests.get(userinfo_url, params = params)
@@ -125,7 +136,7 @@ def gconnect():
     # ADD PROVIDER TO LOGIN SESSION
     login_session['provider'] = 'google'
     login_session['username'] = data['name']
-    login_session['picture'] = data['picture']
+    login_session['image'] = data['picture']
     login_session['email'] = data['email']
     
     # see if user exists, if it doesn't, make a new one
@@ -139,7 +150,7 @@ def gconnect():
     output += login_session['username']
     output += '!</h1>'
     output += '<img src="'
-    output += login_session['picture']
+    output += login_session['image']
     output +=' " style = "width: 300px; height: 300px;border-radius: 150px;-webkit-border-radius: 150px;-moz-border-radius: 150px;"> '
     flash("you are now logged in as %s"% login_session['username'])
     print "done!"
@@ -150,7 +161,7 @@ def gconnect():
 
 def createUser(login_session):
     newUser = User(name=login_session['username'], email=login_session[
-                    'email'], picture=login_session['picture'])
+                    'email'], image=login_session['image'])
     session.add(newUser)
     session.commit()
     user = session.query(User).filter_by(email=login_session['email']).one()

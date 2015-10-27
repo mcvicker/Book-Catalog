@@ -1,4 +1,4 @@
-1. Verify all basic crud operations.
+1. Verify all basic crud operations. - believe this is completed. 
 2. Add additional functionality: more fields. Ability to change a book's category
 3. Login/Oauth: Google
 4. Oauth: Facebook
