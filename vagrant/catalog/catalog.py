@@ -215,7 +215,7 @@ def gdisconnect():
             json.dumps('Failed to revoke token for given user.'), 400)
         response.headers['Content-Type'] = 'application/json'
         return response
-    
+        
 
 
         
@@ -254,60 +254,63 @@ def showCategory():
 # create a new category
 @app.route('/category/new/', methods=['GET','POST'])
 def newCategory():
-  #if 'username' not in login_session:
-  #  return redirect('/login')
+  if 'username' not in login_session:
+    return redirect('/login')
   if request.method == 'POST':
-      newCategory = Category(binding = request.form['binding'])
-      #, user_id=login_session['user_id']) commented out until login is set up
+      newCategory = Category(binding = request.form['binding'],
+      user_id=login_session['user_id'])
       session.add(newCategory)
       flash('New Category %s Successfully Created' % newCategory.binding)
       session.commit()
       return redirect(url_for('showCategory'))
   else:
       return render_template('newCategory.html')
-      # need to set up templates for these
+      
 
 
 #Edit a Category
 @app.route('/category/<int:category_id>/edit/', methods = ['GET', 'POST'])
 def editCategory(category_id):
-  #if 'username' not in login_session:
-    #return redirect('/login')
+  if 'username' not in login_session:
+    return redirect('/login')
   editedCategory = session.query(Category).filter_by(id = category_id).one()
-  #if editedCategory.user_id == login_session.get('user_id'):
-  if request.method == 'POST':
-    if request.form['name']:
-        editedCategory.binding = request.form['binding']
-        flash('Category Successfully Edited %s' % editedCategory.binding)
-        return redirect(url_for('showCategories'))
-  else:
+  if editedCategory.user_id == login_session.get('user_id'):
+    if request.method == 'POST':
+        if request.form['binding']:
+            editedCategory.binding = request.form['binding']
+            flash('Category Successfully Edited %s' % editedCategory.binding)
+            return redirect(url_for('showCategory'))
+    else:
         return render_template('editCategory.html', category = editedCategory)
-  #else:
-        #return '<script>window.alert("You do not have authorization to edit this page!");</script>'
+  else:
+        return '<script>window.alert("You do not have authorization to edit this page!");</script>'
+        # need to update this to return back to category page after throwing up error. 
 
 
 @app.route('/category/<int:category_id>/delete/', methods = ['GET', 'POST'])
 def deleteCategory(category_id):
   categoryToDelete = session.query(Category).filter_by(id = category_id).one()
-  #if 'username' not in login_session:
-    #return redirect('/login')
-  #if restaurantToDelete.user_id == login_session.get('user_id'):
-  if request.method == 'POST':
-    if 'delete' in request.form:
-        session.delete(categoryToDelete)
-        flash('%s Successfully Deleted' % categoryToDelete.binding)
-        session.commit()
-        return redirect(url_for('showCategory', category_id = category_id))
-    elif 'cancel' in request.form:
-        flash ('Deletion of %s Canceled' % categoryToDelete.binding )
-        return redirect(url_for('showCategory'))       
+  if 'username' not in login_session:
+    return redirect('/login')
+  if categoryToDelete.user_id == login_session.get('user_id'):
+    if request.method == 'POST':
+        if 'delete' in request.form:
+            session.delete(categoryToDelete)
+            flash('%s Successfully Deleted' % categoryToDelete.binding)
+            session.commit()
+            return redirect(url_for('showCategory', category_id = category_id))
+        elif 'cancel' in request.form:
+            flash ('Deletion of %s Canceled' % categoryToDelete.binding )
+            return redirect(url_for('showCategory'))       
+    else:
+        return render_template('deleteCategory.html',category = categoryToDelete)
   else:
-    return render_template('deleteCategory.html',category = categoryToDelete)
-  #else:
-    #return '<script>window.alert("You do not have authorization to delete this page!");</script>'
-
+    return '<script>window.alert("You do not have authorization to delete this page!");</script>'
+    # need to update this to return back to category page after throwing up error. 
 @app.route('/category/<int:category_id>/')
 @app.route('/category/<int:category_id>/books/')
+
+#will need to carefully consider how this works with/against the autoimporter functionality
 def showBooks(category_id):
     category = session.query(Category).filter_by(id = category_id).one()
     books = session.query(Book).filter_by(category_id = category_id).all()
