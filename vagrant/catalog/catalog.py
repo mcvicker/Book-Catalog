@@ -61,6 +61,12 @@ def upload_file():
 def uploaded_file(filename):
     return render_template('uploadedFile.html', filename = filename)
 
+# poc dropdown
+@app.route('/dropdown')
+def dropdown():
+    categories = session.query(Category).order_by(asc(Category.binding))
+    return render_template('dropdown.html', categories = categories)
+    
 # Create a state token to prevent request forgery.
 # Storing it in the session for later validation.
 @app.route('/login')
@@ -307,21 +313,19 @@ def deleteCategory(category_id):
   else:
     return '<script>window.alert("You do not have authorization to delete this page!");</script>'
     # need to update this to return back to category page after throwing up error. 
+
 @app.route('/category/<int:category_id>/')
 @app.route('/category/<int:category_id>/books/')
-
 #will need to carefully consider how this works with/against the autoimporter functionality
 def showBooks(category_id):
     category = session.query(Category).filter_by(id = category_id).one()
     books = session.query(Book).filter_by(category_id = category_id).all()
-    try:
-        creator = session.query(User).filter_by(id = category.user_id).one()
-        print dir(creator)
-    except:
-    # a placeholder creator for all the imported books with no true creator.
-    # may just want to change the importer to import items with UID 0 or 1.
-        creator = User(name='imported', email='email', id='0')
+    creator = session.query(User).filter_by(id = category.user_id).one()    
     if creator.id == login_session.get('user_id'):
+        return render_template('books.html', books = books, category = category)
+    # we want users to be able to add to our pre-imported categories.
+    # think about an 'addonly.html' file for ONLY the ability to add books. 
+    elif creator.id == '0':
         return render_template('books.html', books = books, category = category)
     # private template needs ui facelift.
     else:
@@ -330,11 +334,25 @@ def showBooks(category_id):
 # need to add image handling.
 @app.route('/category/<int:category_id>/book/new/',methods=['GET','POST']) 
 def newBook(category_id):
+    if 'username' not in login_session:
+        return redirect('/login')
     category = session.query(Category).filter_by(id = category_id).one()
     if request.method == 'POST':
+        if request.files['file']:
+            file = request.files['file']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(path)
+                # we need to save a slightly different version of the path in the database.
+                dbpath = path.replace("/vagrant/catalog","")
+        else:
+            dbpath = ""
+                
         newBook = Book(title = request.form['title'], author = request.form['author'], price = request.form['price'],
                        description = request.form['description'], fiction = request.form['fiction'], 
-                       isbn = request.form['isbn'], published = request.form['published'], category_id = category_id)
+                       isbn = request.form['isbn'], published = request.form['published'], category_id = category_id,
+                       image = dbpath, user_id = login_session['user_id'])
         session.add(newBook)
         session.commit()
         flash('New Book %s Successfully Created' % (newBook.title))
@@ -376,11 +394,18 @@ def showBook(category_id, book_id):
         image = Column(Integer,ForeignKey('image.id'))
     """    
     return render_template('book.html', category = category, book = book)
-    
+
 @app.route('/category/<int:category_id>/book/<int:book_id>/edit/', methods=['GET', 'POST'])    
 def editBook(category_id, book_id):
+    if 'username' not in login_session:
+        return redirect('/login')
     category = session.query(Category).filter_by(id = category_id).one()
     editedBook = session.query(Book).filter_by(id = book_id).one()
+    categories = session.query(Category).order_by(asc(Category.binding))
+    # should be able to 
+    if login_session['user_id'] != category.user_id:
+        if login_session['user_id'] != editedBook.user_id:
+            return "<script>function myFunction() {alert('You are not authorized to edit books in this category. You may only edit books that you have created or that are in categories you have created.');}</script><body onload='myFunction()''>"
     if request.method == 'POST':
         if request.form['title']:
             editedBook.title = request.form['title']
@@ -396,6 +421,8 @@ def editBook(category_id, book_id):
             editedBook.isbn = request.form['isbn']
         if request.form['published']:
             editedBook.published = request.form['published']
+        if request.form['select']:
+            editedBook.category_id = request.form['select']
         if request.files['file']:
             file = request.files['file']
             if file and allowed_file(file.filename):
@@ -405,17 +432,24 @@ def editBook(category_id, book_id):
                 # we need to save a slightly different version of the path in the database.
                 dbpath = path.replace("/vagrant/catalog","")
                 editedBook.image = dbpath
+        
         session.add(editedBook)
         session.commit() 
         flash('Book Successfully Edited')
         return redirect(url_for('showCategory'))
     else:
-        return render_template('editBook.html', category_id = category_id, book_id = book_id, book = editedBook)
-    
+        return render_template('editBook.html', category_id = category_id, book_id = book_id, book = editedBook, categories = categories)
+
+
 @app.route('/category/<int:category_id>/books/<int:book_id>/delete/', methods=['GET', 'POST'])
 def deleteBook(category_id, book_id):
+    if 'username' not in login_session:
+        return redirect('/login')
     category = session.query(Category).filter_by(id = category_id).one()
     bookToDelete = session.query(Book).filter_by(id = book_id).one()
+    if login_session['user_id'] != category.user_id:
+        if login_session['user_id'] != bookToDelete.user_id:
+            return "<script>function myFunction() {alert('You are not authorized to delete books in this category. You may only delete books that you have created or that are in categories you have created.');}</script><body onload='myFunction()''>"    
     if request.method == 'POST':
         session.delete(bookToDelete)
         session.commit()

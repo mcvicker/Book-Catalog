@@ -33,9 +33,14 @@ DBSession = sessionmaker(bind=engine)
 # session.rollback()
 session = DBSession()
 
+# first, set up an 'imported' user
+imported = User(name='imported', email='automaticimport@noreply.com', id='0')    
+session.add(imported)
+session.commit()
     
 # we open up the .tsv file to get a selection of bindings.
 # this also sets an allrows variable to get the length of the rows.
+
 allrows = []
 with open('My_Shelfari_Books.tsv','rb') as tsvfile:
     reader = csv.DictReader(tsvfile, delimiter=',')
@@ -48,7 +53,7 @@ bindings = set(allrows)
 
 # we put the bindings in place first so that we can connect the books to binding types in the next step
 for index, item in enumerate(bindings, start = 1):
-    category = Category(binding = item)
+    category = Category(binding = item, user_id = '0')
     session.add(category)
     session.commit()
     completed = Decimal(index/len(bindings)*100).quantize(Decimal('.01'))
@@ -57,7 +62,7 @@ for index, item in enumerate(bindings, start = 1):
 # I don't believe that this import process is optimized. Likely there is a better way to batch 
 # web requests to google as well as database writes. Potentially read everything into
 # python variables and then do a massive write to the database? Maybe do sets of 10 or 100? 
-# also need try/catch blocks in here to catch items with no description/no image
+
    
 with open('My_Shelfari_Books.tsv','rb') as tsvfile:
     reader = csv.DictReader(tsvfile, delimiter=',')
@@ -69,6 +74,7 @@ with open('My_Shelfari_Books.tsv','rb') as tsvfile:
         isbn = (row)['ISBN']
         published = (row)['Year Published']
         binding = (row)['Binding']
+        user_id = '0'
         token = title.replace(" ", "+")
         # we look at the binding type to determine the category
         category = session.query(Category).filter_by(binding = binding).one()
@@ -89,7 +95,7 @@ with open('My_Shelfari_Books.tsv','rb') as tsvfile:
             image = ""
         book = Book(
             title = title, author = author, isbn = isbn, published = published, 
-            category_id = category.id, description = description, image = image)
+            category_id = category.id, description = description, image = image, user_id = user_id)
         session.add(book)
         session.commit()
         # we reuse the allrows variable to determine the percentage completed

@@ -45,6 +45,18 @@
 					    <input type="radio" name="fiction" id="nonfiction" value="False" {% if book.fiction == 'False' %}checked{%endif%}>NonFiction
 					  </label>
 					</div>
+                    <select id="select" name="select">
+                    {% if categories !=[] %}	
+                        {% for i in categories %}
+                            {% if i.id == category_id %}
+                                <option selected value={{i.id}}>{{i.binding}}</option>
+                            {% else %}
+                            <option value={{i.id}}>{{i.binding}}</option>
+                            {% endif %}
+                        {% endfor %}	
+                    {% endif %}
+                    </select>
+                    </br>
                     <label for "file">Picture:</label>
                     <input type="file" name="file">
                     <button type="submit" class="btn btn-default" id="submit" type="submit" value="submit">
