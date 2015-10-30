@@ -314,11 +314,18 @@ def deleteCategory(category_id):
 def showBooks(category_id):
     category = session.query(Category).filter_by(id = category_id).one()
     books = session.query(Book).filter_by(category_id = category_id).all()
-    # creator = session.query(User).filter_by(id = restaurant.user_id).one()
-    #if restaurant.user_id == login_session.get('user_id'):
-    return render_template('books.html', books = books, category = category)
-    #else:
-    #   return render_template('publicmenu.html', items = items, restaurant = restaurant, creator = creator)
+    try:
+        creator = session.query(User).filter_by(id = category.user_id).one()
+        print dir(creator)
+    except:
+    # a placeholder creator for all the imported books with no true creator.
+    # may just want to change the importer to import items with UID 0 or 1.
+        creator = User(name='imported', email='email', id='0')
+    if creator.id == login_session.get('user_id'):
+        return render_template('books.html', books = books, category = category)
+    # private template needs ui facelift.
+    else:
+       return render_template('publicbooks.html', books = books, category = category, creator = creator)
 
 # need to add image handling.
 @app.route('/category/<int:category_id>/book/new/',methods=['GET','POST']) 
