@@ -162,7 +162,75 @@ def gconnect():
     print "done!"
     return output
 
+    
+# Facebook Login
 
+@app.route('/fbconnect', methods=['POST'])
+def fbconnect():
+    if request.args.get('state') != login_session['state']:
+        response = make_response(json.dumps('Invalid state parameter.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    access_token = request.data
+    print "access token recieved %s " % access_token
+    
+    app_id = json.loads(open('fb_client_secrets.json', 'r').read())['web']['app_id']
+    app_secret = json.loads(open('fb_client_secrets.json', 'r').read())['web']['app_secret']
+    url = 'https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&client_id=%s&client_secret=%s&fb_exchange_token=%s' % (
+        app_id, app_secret, access_token)
+        
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+
+    # Use token to get user info from APIs.
+    userinfo_url = "https://graph.facebook.com/v2.4/me"
+    # strip expire tag from access token
+    token = result.split("&")[0]
+    print token
+    
+    url = 'https://graph.facebook.com/v2.4/me?%s&fields=name, id, email' % token
+    
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+    print "url sent for API access:%s" % url
+    print "API JSON result %s" % result
+    data = json.loads(result)
+    login_session['provider'] = 'facebook'
+    login_session['username'] = data['name']
+    login_session['email'] = data['email']
+    login_session['facebook_id'] = data['id']
+    
+    # The token must be stored in the login_session in order to properly logout. Let's strip out the infomation before the '=' in our token
+    stored_token = token.split('=')[1]
+    login_session['access_token'] = stored_token
+    
+    # Get user picture
+    url = 'https://graph.facebook.com/v2.4/me/picture?%s&redirect=0&height=200&width=200' % token
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[1]
+    data = json.loads(result)
+    
+    login_session['picture'] = data['data']['url']
+    
+    # see if a user exists, if it doesn't, make a new one (likely can be turned into a helper function)
+    
+    user_id = getUserID(login_session['email'])
+    if not user_id:
+        user_id = createUser(login_session)
+    login_session['user_id'] = user_id
+    
+    output = ''
+    output += '<h1>Welcome, '
+    output += login_session['username']
+    
+    output += '!</h1>'
+    output += '<img src="'
+    output += login_session['picture']
+    output += ' " style = "width: 300px; height: 300px; border-radious: 150px;-webkit-border-radius: 150px;-mpz-border-radius: 150px;"> '
+    
+    flash("Now logged in as %s" % login_session['username'])
+    return output
+    
 # User Helper Functions
 
 def createUser(login_session):
@@ -187,6 +255,25 @@ def getUserID(email):
         
 # DISCONNECT FUNCTIONS
 
+@app.route('/disconnect')
+def disconnect():
+    if 'provider' in login_session:
+        if login_session['provider'] == 'google':
+            gdisconnect()
+        if login_session['provider'] == 'facebook':
+            fbdisconnect()
+            del login_session['facebook_id']
+        del login_session['username']
+        del login_session['email']
+        del login_session['image']
+        del login_session['user_id']
+        del login_session['provider']
+        flash("You have successfully logged out.")
+        return redirect(url_for('showCategory'))
+    else:
+        flash("You were not logged in")
+        return redirect(url_for('showCategory'))
+        
 @app.route('/gdisconnect')
 def gdisconnect():
     # Only Disconnect a connected user
@@ -223,6 +310,15 @@ def gdisconnect():
         return response
         
 
+@app.route('/fbdisconnect')
+def fbdisconnect():
+    facebook_id = login_session['facebook_id']
+    # the access token must be included to successfully log out
+    access_token = login_session['access_token']
+    url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id,access_token)
+    h = httplib2.Http()
+    result = h.request(url, 'DELETE')[1]
+    return "You have been logged out."
 
         
 #JSON APIs to view Book Information
@@ -402,7 +498,7 @@ def editBook(category_id, book_id):
     category = session.query(Category).filter_by(id = category_id).one()
     editedBook = session.query(Book).filter_by(id = book_id).one()
     categories = session.query(Category).order_by(asc(Category.binding))
-    # should be able to 
+    # should be able to edit if you own either the category or the book.
     if login_session['user_id'] != category.user_id:
         if login_session['user_id'] != editedBook.user_id:
             return "<script>function myFunction() {alert('You are not authorized to edit books in this category. You may only edit books that you have created or that are in categories you have created.');}</script><body onload='myFunction()''>"
