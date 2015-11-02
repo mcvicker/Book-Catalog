@@ -188,7 +188,7 @@ def fbconnect():
     token = result.split("&")[0]
     print token
     
-    url = 'https://graph.facebook.com/v2.4/me?%s&fields=name, id, email' % token
+    url = 'https://graph.facebook.com/v2.4/me?%s&fields=name,id,email' % token
     
     h = httplib2.Http()
     result = h.request(url, 'GET')[1]
@@ -210,7 +210,7 @@ def fbconnect():
     result = h.request(url, 'GET')[1]
     data = json.loads(result)
     
-    login_session['picture'] = data['data']['url']
+    login_session['image'] = data['data']['url']
     
     # see if a user exists, if it doesn't, make a new one (likely can be turned into a helper function)
     
@@ -225,11 +225,13 @@ def fbconnect():
     
     output += '!</h1>'
     output += '<img src="'
-    output += login_session['picture']
+    output += login_session['image']
     output += ' " style = "width: 300px; height: 300px; border-radious: 150px;-webkit-border-radius: 150px;-mpz-border-radius: 150px;"> '
     
     flash("Now logged in as %s" % login_session['username'])
     return output
+
+    
     
 # User Helper Functions
 
@@ -335,7 +337,7 @@ def menuItemJSON(category_id, book_id):
     return jsonify(book = book.serialize)
 
 @app.route('/category/JSON')
-def restaurantsJSON():
+def categoriesJSON():
     categories = session.query(Category).all()
     return jsonify(categories = [r.serialize for r in categories])
 

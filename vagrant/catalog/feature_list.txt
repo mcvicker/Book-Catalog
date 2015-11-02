@@ -1,11 +1,10 @@
 1. Verify all basic crud operations. - believe this is completed. 
-2. Add additional functionality: more fields. Ability to change a book's category
+2. Add additional functionality: more fields. Ability to change a book's category (done)
 3. Login/Oauth: Google
 4. Oauth: Facebook
 5. Oauth: Amazon
-6. photos
-7. Auto-import from google books
+6. photos - resize to fit.
+7. Allow users to use importer -- would need to build importer UI.
 8. UI facelift. 
 9. code cleanup - pep 8 and verify everything
-10. improve importer - show percentage completed. Add image imports. Put in quotes around book name that is imported. 
-Allow users to use importer -- would need to build importer UI.
+10. resize images to fit css

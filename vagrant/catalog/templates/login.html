@@ -92,7 +92,7 @@ function signInCallback(authResult) {
                 if (result) {
                     $('#result').html('Login Successful!</br>' + result + '</br>Redirecting...')
                     setTimeout(function() {
-                    window.location.href = "/restaurant";
+                    window.location.href = "/category";
                     }, 4000);
                 }   else {
                     $('#result').html('Failed to make a server-side call. Check your configuration and console.');
@@ -115,6 +115,8 @@ function signInCallback(authResult) {
 </button>
 
 <!--END FACEBOOK SIGN IN-->
+
+
 
 </body>
 
