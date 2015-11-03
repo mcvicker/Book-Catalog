@@ -417,7 +417,7 @@ def deleteCategory(category_id):
 #will need to carefully consider how this works with/against the autoimporter functionality
 def showBooks(category_id):
     category = session.query(Category).filter_by(id = category_id).one()
-    books = session.query(Book).filter_by(category_id = category_id).all()
+    books = session.query(Book).filter_by(category_id = category_id).order_by(asc(Book.title))
     creator = session.query(User).filter_by(id = category.user_id).one()    
     if creator.id == login_session.get('user_id'):
         return render_template('books.html', books = books, category = category)

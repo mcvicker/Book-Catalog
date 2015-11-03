@@ -39,13 +39,16 @@ session.add(imported)
 session.commit()
     
 # we open up the .tsv file to get a selection of bindings.
-# this also sets an allrows variable to get the length of the rows.
+# this also sets an allrows variable to get the number of rows later.
 
 allrows = []
 with open('My_Shelfari_Books.tsv','rb') as tsvfile:
     reader = csv.DictReader(tsvfile, delimiter=',')
-    #print reader.fieldnames
+    # Blank bindings are confusing so we remove them in this step. 
     for row in reader:
+        if row['Binding'] == '':
+            allrows.append('Unknown Binding')
+    else:
         allrows.append(row['Binding'])
     
       
@@ -68,6 +71,7 @@ with open('My_Shelfari_Books.tsv','rb') as tsvfile:
     reader = csv.DictReader(tsvfile, delimiter=',')
     # start our count at 1 to create meaningful progress status.
     key = "AIzaSyDalhBzXGHjJYN6rW-ry-KbjM9kbcdR6o0"
+    # our access key for the google books API
     for index, row in enumerate(reader, start = 1):    
         title = (row)['Title']
         author = (row)['Author']
