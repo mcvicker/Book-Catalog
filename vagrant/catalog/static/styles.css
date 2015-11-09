@@ -6,7 +6,7 @@
 h1 {
 	font-family: "Helvetica Neue Light", Roboto, Helvetica, Arial, sans-serif;
 	font-size: 50px;
-	color: #51453B;
+	color: #bbaacc;
 	line-height: 60px;
 	font-weight: 300;
 }
@@ -56,9 +56,9 @@ h3 {
 .btn {
 	padding: 20px;
 	margin: 0;
-	border-color: #9FB80A;
+	border-color: #9999aa;
 	border-width: 2px;
-	color: #9FB80A;;
+	color: #9999aa;
 }
 .btn:hover {
 	border-color: #9FB80A;
@@ -86,17 +86,17 @@ h3 {
 	margin-bottom: 0;
 	line-height: 16px;
 	font-size: 16px;
-	color: #7B7573;
+	color: #9999aa;
 	font-weight: 400;
 }
 .divider {
 	height: 15px;
 }
-.divider.blue {
-	background-color: #42C3C9;
+.divider.grey {
+	background-color: #9999aa;
 }
-.divider.green {
-	background-color: #9FB80A;
+.divider.purple {
+	background-color: #bbaacc;
 }
 .banner.main {
 	height: 150px;
@@ -107,7 +107,7 @@ h3 {
 }
 .banner.menu {
 	height: 150px;
-	background-color: #E1E17F;
+	background-color: #222222;
 }
 .banner.profile {
 	height: 150px;
@@ -116,21 +116,21 @@ h3 {
 .banner h1 {
 	margin: 45px 0;
 }
- .restaurant-list {
+ .category-list {
  	background-color: #F0F0F0;
  	padding: 20px;
 u }
- .restaurant-list:hover {
- 	background-color: #e1e17f;
+ .category-list:hover {
+ 	background-color: #eeffff;
  	padding: 20px;
 }
-.menu-item {
+.category-item {
 	background: #F0F0F0;
 	padding: 20px;
 	margin: 20px;
 	margin-left: -20px;
 }
-.menu-price {
+.book-detail {
 	font-weight: 700;
 }
 .creator {
@@ -150,7 +150,7 @@ u }
 	margin-top: -20px;
 }
 .flash {
-	background-color: #98FB98;
+	background-color: #eeffff;
 	width:100%;
 	text-decoration: none;
 
@@ -160,4 +160,50 @@ u }
 	list-style-type: none;
 	text-align: center;
 
+}
+
+.book {
+	padding: 15px 2px 2px 2px;
+    border: 2px solid transparent;
+	margin: auto;
+}
+
+.book:hover {
+    padding: 15px 2px 2px 2px;
+    background-color: #9FB80A;
+ 	
+}
+
+.booklink:before{ 
+	content: '';
+    display: block;
+    width: 80%;
+    height: 1em;
+    background: rgba(0,0,0,.35);
+    border-radius: 50%;
+    position: absolute;
+    bottom:-10px;
+    -webkit-filter: blur(5px);
+    filter: blur(5px);
+    z-index:-5;
+}
+.shelf {
+	border-bottom: 30px solid #a5a5a5;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+	top: -15px;
+	z-index: -10;
+}
+/*to give shelf depth*/
+.shelf:after {
+	content: '';
+	background: #686868;
+	height: 20px;
+	width: calc(100% + 40px); /*IE9+*/
+	position: absolute;
+	top: 30px;
+	left: 0;
+	right: 0;
+	z-index: 1;
+	margin: 0 -20px;
 }

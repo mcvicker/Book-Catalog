@@ -2,14 +2,14 @@
 {% block content %}
 {% include "header.html" %}
 	
-	<div class="row divider green">
+	<div class="row divider purple">
 		<div class="col-md-12"></div>
 	</div>
 	<div class="row banner menu">
 		<div class="col-md-11 col-md-offset-1 padding-none">
 			<h1>{{ category.binding }}
 			<figure class="creator">
-				<img src="{{ creator.picture}}">
+				<img src="{{ creator.image }}"/>
 				<figcaption>{{ creator.name }}</figcaption>
 			</figure>
 			</h1>
@@ -37,19 +37,19 @@
 		</div>
 	</div>
 	{% if books !=[] %}	
-		<div class="row">
-			<div class="col-md-1"></div>
-			<div class="col-md-3">
-					{% for i in books %}
-						
-							<div class="menu-item">
-								<h3><a href="{{url_for('showBook', category_id = category.id, book_id=i.id)}}">{{i.title}}</a></h3>
-								<p><img src="{{i.image}}" alt="{{i.title}}"></p>
-							</div>
-						
-					{% endfor %}			
+        <div class="container">
+            <div class="row">
+                
+               
+					{% for item in books | batch(3) %}
+                        {% for i in item %}
+						<div class="col-xs-4 col-md-2"><a href="{{url_for('showBook', category_id = category.id, book_id = i.id)}}" class="booklink"/><img src="{{i.image}}" alt="{{i.title}}" class="img-responsive book"/></a></div>
+					    {% endfor %}
+					<div class="{{loop.cycle('col-xs-12 shelf hidden-md hidden-lg', 'col-xs-12 shelf')}}"></div>       
+					{% endfor %}
+                        
 			</div>
-			<div class="col-md-1"></div>
+			
 		</div>
 	{% endif %}
 {% endblock %}

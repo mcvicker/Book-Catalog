@@ -67,6 +67,11 @@ def dropdown():
     categories = session.query(Category).order_by(asc(Category.binding))
     return render_template('dropdown.html', categories = categories)
     
+# poc book layout
+@app.route('/layout')
+def layout():
+    return render_template('layout.html')
+    
 # Create a state token to prevent request forgery.
 # Storing it in the session for later validation.
 @app.route('/login')
@@ -74,6 +79,7 @@ def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits) for x in xrange(32))
     login_session['state'] = state
     return render_template("login.html", STATE=state)       
+
 # Google Plus OAuth2 code
 
 @app.route('/gconnect', methods=['POST'])
@@ -149,9 +155,11 @@ def gconnect():
     user_id = getUserID(login_session['email'])
     if not user_id:
         user_id = createUser(login_session)
-    login_session['user_id'] = user_id            
+    login_session['user_id'] = user_id
+    
     
     output = ''
+    output += data['name']
     output +='<h1>Welcome, '
     output += login_session['username']
     output += '!</h1>'
@@ -161,7 +169,7 @@ def gconnect():
     flash("you are now logged in as %s" % login_session['username'])
     print "done!"
     return output
-
+    
     
 # Facebook Login
 
@@ -199,6 +207,7 @@ def fbconnect():
     login_session['username'] = data['name']
     login_session['email'] = data['email']
     login_session['facebook_id'] = data['id']
+    
     
     # The token must be stored in the login_session in order to properly logout. Let's strip out the infomation before the '=' in our token
     stored_token = token.split('=')[1]
@@ -263,13 +272,14 @@ def disconnect():
         if login_session['provider'] == 'google':
             gdisconnect()
         if login_session['provider'] == 'facebook':
-            fbdisconnect()
-            del login_session['facebook_id']
+            fbdisconnect()    
         del login_session['username']
         del login_session['email']
         del login_session['image']
         del login_session['user_id']
         del login_session['provider']
+        
+        
         flash("You have successfully logged out.")
         return redirect(url_for('showCategory'))
     else:
@@ -294,10 +304,6 @@ def gdisconnect():
         # Reset the user's session.
         del login_session['credentials']
         del login_session['gplus_id']
-        del login_session['username']
-        del login_session['email']
-        del login_session['image']
-        
         response = make_response(
             json.dumps('Successfully disconnected.'), 200)
         response.headers['Content-Type'] = 'application/json'
@@ -320,6 +326,7 @@ def fbdisconnect():
     url = 'https://graph.facebook.com/%s/permissions?access_token=%s' % (facebook_id,access_token)
     h = httplib2.Http()
     result = h.request(url, 'DELETE')[1]
+    del login_session['facebook_id']
     return "You have been logged out."
 
         
@@ -341,11 +348,14 @@ def categoriesJSON():
     categories = session.query(Category).all()
     return jsonify(categories = [r.serialize for r in categories])
 
+    
+# Core routes for application
+    
 @app.route('/')   
 @app.route('/category/')
 def showCategory():
         categories = session.query(Category).order_by(asc(Category.binding))
-        return render_template('categories.html', categories = categories)
+        return render_template('categories.html', categories = categories, login_session = login_session)
         """
         def showRestaurants():
   restaurants = session.query(Restaurant).order_by(asc(Restaurant.name))
@@ -420,78 +430,57 @@ def showBooks(category_id):
     books = session.query(Book).filter_by(category_id = category_id).order_by(asc(Book.title))
     creator = session.query(User).filter_by(id = category.user_id).one()    
     if creator.id == login_session.get('user_id'):
-        return render_template('books.html', books = books, category = category)
+        return render_template('books.html', books = books, category = category, creator = creator)
     # we want users to be able to add to our pre-imported categories.
-    # think about an 'addonly.html' file for ONLY the ability to add books. 
-    elif creator.id == '0':
-        return render_template('books.html', books = books, category = category)
+    # addonly allows users to add to pre-existing categories.
+    elif creator.id == 0:
+        return render_template('addonly.html', books = books, category = category, creator = creator)
     # private template needs ui facelift.
     else:
        return render_template('publicbooks.html', books = books, category = category, creator = creator)
 
-# need to add image handling.
+
 @app.route('/category/<int:category_id>/book/new/',methods=['GET','POST']) 
 def newBook(category_id):
     if 'username' not in login_session:
         return redirect('/login')
     category = session.query(Category).filter_by(id = category_id).one()
     if request.method == 'POST':
-        if request.files['file']:
-            file = request.files['file']
-            if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(path)
-                # we need to save a slightly different version of the path in the database.
-                dbpath = path.replace("/vagrant/catalog","")
-        else:
-            dbpath = ""
+        if 'submit' in request.form:
+            if request.files['file']:
+                file = request.files['file']
+                if file and allowed_file(file.filename):
+                    filename = secure_filename(file.filename)
+                    path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                    file.save(path)
+                    # we need to save a slightly different version of the path in the database.
+                    dbpath = path.replace("/vagrant/catalog","")
+            else:
+                dbpath = ""
                 
-        newBook = Book(title = request.form['title'], author = request.form['author'], price = request.form['price'],
+            newBook = Book(title = request.form['title'], author = request.form['author'], price = request.form['price'],
                        description = request.form['description'], fiction = request.form['fiction'], 
                        isbn = request.form['isbn'], published = request.form['published'], category_id = category_id,
                        image = dbpath, user_id = login_session['user_id'])
-        session.add(newBook)
-        session.commit()
-        flash('New Book %s Successfully Created' % (newBook.title))
-        return redirect(url_for('showCategory', category_id = category_id))
+            session.add(newBook)
+            session.commit()
+            flash('New Book %s Successfully Created' % (newBook.title))
+            return redirect(url_for('showBooks', category_id = category_id))
+        flash('Book Creation Cancelled')
+        return redirect(url_for('showBooks', category_id = category_id))
     else:
             return render_template('newBook.html')
             
 
 
-# prettify this -- use a template
 @app.route('/category/<int:category_id>/book/<int:book_id>/')
 def showBook(category_id, book_id):
     category = session.query(Category).filter_by(id = category_id).one()
     book = session.query(Book).filter_by(id = book_id).one()
-    output = ""
-    output += book.title
-    output += "<br>"
-    output += book.author
-    output += "<br>"
-    output += str(book.id)
-    output += "<br>"
-    output += book.description
-    output += "<br>"
-    output += str(book.price)
-    output += "<br>"
-    output += str(book.isbn)
-    output += "<br>"
-    output += str(book.fiction)
-    output += "<br>"
-    output += str(book.published)
-    output += "<br>"
-    output += str(book.image)
-    """
-        # Need to declare fiction as a bool but bool not supported by sqlite.
-        category_id = Column(Integer,ForeignKey('category.id'))
-        user_id = Column(Integer,ForeignKey('user.id'))
-        user = relationship(User)
-        published = Column(String(4), nullable = True)
-        image = Column(Integer,ForeignKey('image.id'))
-    """    
-    return render_template('book.html', category = category, book = book)
+    creator = session.query(User).filter_by(id = book.user_id).one()
+    if creator.id == login_session.get('user_id') or category.user_id == login_session.get('user_id'):
+        return render_template('book.html', category = category, book = book, creator = creator)
+    return render_template('publicBook.html', category = category, book = book, creator = creator)
 
 @app.route('/category/<int:category_id>/book/<int:book_id>/edit/', methods=['GET', 'POST'])    
 def editBook(category_id, book_id):
@@ -533,8 +522,8 @@ def editBook(category_id, book_id):
         
         session.add(editedBook)
         session.commit() 
-        flash('Book Successfully Edited')
-        return redirect(url_for('showCategory'))
+        flash('%s Successfully Edited' % editedBook.title)
+        return redirect(url_for('showBook', category_id = category_id, book_id = book_id))
     else:
         return render_template('editBook.html', category_id = category_id, book_id = book_id, book = editedBook, categories = categories)
 
@@ -549,10 +538,14 @@ def deleteBook(category_id, book_id):
         if login_session['user_id'] != bookToDelete.user_id:
             return "<script>function myFunction() {alert('You are not authorized to delete books in this category. You may only delete books that you have created or that are in categories you have created.');}</script><body onload='myFunction()''>"    
     if request.method == 'POST':
-        session.delete(bookToDelete)
-        session.commit()
-        flash ('Book Successfully Deleted')
-        return redirect(url_for('showBooks', category_id = category_id))
+        if 'delete' in request.form:
+            session.delete(bookToDelete)
+            session.commit()
+            flash ('%s Successfully Deleted' % bookToDelete.title)
+            return redirect(url_for('showBooks', category_id = category_id))
+        else:
+            flash ('Deletion of %s Canceled' % bookToDelete.title)
+            return redirect(url_for('showBook', category_id = category_id, book_id = book_id))
     else:
         return render_template('deleteBook.html', book = bookToDelete, category_id = category_id)
    
@@ -560,6 +553,3 @@ if __name__ == '__main__':
         app.debug = True
         app.secret_key = 'mr_bigglesworth'
         app.run(host = '0.0.0.0', port = 8000)
-        
-# 750608331471-bpfc200kk4s6cjm5om3njl828kp495jh.apps.googleusercontent.com client ID
-# iDYxmsXFexv9KXUZ7OqE6k_z client secret

@@ -34,7 +34,7 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 # first, set up an 'imported' user
-imported = User(name='imported', email='automaticimport@noreply.com', id='0')    
+imported = User(name='Automatically Imported', email='automaticimport@noreply.com', id='0',image="/static/automatic-import.jpg")    
 session.add(imported)
 session.commit()
     
@@ -48,8 +48,8 @@ with open('My_Shelfari_Books.tsv','rb') as tsvfile:
     for row in reader:
         if row['Binding'] == '':
             allrows.append('Unknown Binding')
-    else:
-        allrows.append(row['Binding'])
+        else:
+            allrows.append(row['Binding'])
     
       
 bindings = set(allrows)
@@ -65,6 +65,8 @@ for index, item in enumerate(bindings, start = 1):
 # I don't believe that this import process is optimized. Likely there is a better way to batch 
 # web requests to google as well as database writes. Potentially read everything into
 # python variables and then do a massive write to the database? Maybe do sets of 10 or 100? 
+# Also, returning just the first result is not always correct. A number of Richard Stark books
+# are coming up wrong, which is a damn shame. 
 
    
 with open('My_Shelfari_Books.tsv','rb') as tsvfile:
@@ -77,7 +79,11 @@ with open('My_Shelfari_Books.tsv','rb') as tsvfile:
         author = (row)['Author']
         isbn = (row)['ISBN']
         published = (row)['Year Published']
-        binding = (row)['Binding']
+        # again, we shouldn't import a blank binding type
+        if (row)['Binding'] != '':
+            binding = (row)['Binding']
+        else:
+            binding = 'Unknown Binding'
         user_id = '0'
         token = title.replace(" ", "+")
         # we look at the binding type to determine the category

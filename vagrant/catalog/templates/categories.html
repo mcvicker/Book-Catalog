@@ -6,13 +6,13 @@
 		<div class="col-md-2 text-right">
 					</div>
 	</div>
-	<div class="row divider blue">
+	<div class="row divider grey">
 		<div class="col-md-12"></div>
 	</div>
 	<div class="row banner main">
 		<div class="col-md-1"></div>
 		<div class="col-md-11 padding-none">
-			<h1>Categories</h1>
+			<h1>Book Categories</h1>
 		</div>
 	</div>
 
@@ -35,7 +35,7 @@
 		<div class="col-md-10 padding-none">
 			<a href="{{url_for('newCategory')}}">
 				<button class="btn btn-default" id="new-category">
-					<span class="glyphicon glyphicon-cutlery" aria-hidden="true"></span>Add Category
+					<span class="glyphicon glyphicon-book" aria-hidden="true"></span>Add Category
 				</button>
 			</a>
 		</div>
@@ -45,7 +45,7 @@
 		<a href = "{{ url_for('showBooks', category_id = category.id) }}">
 			<div class="row">
 				<div class="col-md-1"></div>
-					<div class="col-md-10 restaurant-list">
+					<div class="col-md-10 category-list">
 						<h3>{{category.binding}}</h3>
 					</div>
 				<div class="col-md-1"></div>
