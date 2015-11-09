@@ -37,41 +37,7 @@ session = DBSession()
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
-
-# proof of concept upload functionality
-@app.route('/testupload/', methods=['GET','POST'])
-def upload_file():
-    if request.method == 'POST':
-        file = request.files['file']
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            return redirect(url_for('uploaded_file', filename=filename))
-    return '''
-    <!doctype html>
-    <title>Upload new File</title>
-    <h1>Upload new File</h1>
-    <form action="" method=post enctype=multipart/form-data>
-        <p><input type=file name=file>
-            <input type=submit value=Upload>
-    </form>
-    '''
-# proof of concept show image functionality.    
-@app.route('/images/<filename>')
-def uploaded_file(filename):
-    return render_template('uploadedFile.html', filename = filename)
-
-# poc dropdown
-@app.route('/dropdown')
-def dropdown():
-    categories = session.query(Category).order_by(asc(Category.binding))
-    return render_template('dropdown.html', categories = categories)
-    
-# poc book layout
-@app.route('/layout')
-def layout():
-    return render_template('layout.html')
-    
+   
 # Create a state token to prevent request forgery.
 # Storing it in the session for later validation.
 @app.route('/login')
@@ -339,7 +305,7 @@ def bookCategoryJSON(category_id):
 
 
 @app.route('/category/<int:category_id>/books/<int:book_id>/JSON')
-def menuItemJSON(category_id, book_id):
+def bookJSON(category_id, book_id):
     book = session.query(Book).filter_by(id = book_id).one()
     return jsonify(book = book.serialize)
 
@@ -356,14 +322,6 @@ def categoriesJSON():
 def showCategory():
         categories = session.query(Category).order_by(asc(Category.binding))
         return render_template('categories.html', categories = categories, login_session = login_session)
-        """
-        def showRestaurants():
-  restaurants = session.query(Restaurant).order_by(asc(Restaurant.name))
-  if 'username' not in login_session:
-    return render_template('publicrestaurants.html', restaurants = restaurants)
-  else:
-    return render_template('restaurants.html', restaurants = restaurants)
-        """
 
 # create a new category
 @app.route('/category/new/', methods=['GET','POST'])
@@ -424,7 +382,6 @@ def deleteCategory(category_id):
 
 @app.route('/category/<int:category_id>/')
 @app.route('/category/<int:category_id>/books/')
-#will need to carefully consider how this works with/against the autoimporter functionality
 def showBooks(category_id):
     category = session.query(Category).filter_by(id = category_id).one()
     books = session.query(Book).filter_by(category_id = category_id).order_by(asc(Book.title))
