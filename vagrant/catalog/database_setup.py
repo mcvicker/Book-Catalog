@@ -35,6 +35,7 @@ class Category(Base):
     binding = Column(String(250), nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship(User)
+    books = relationship('Book', cascade='delete')
 
     @property
     def serialize(self):

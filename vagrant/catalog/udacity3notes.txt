@@ -1,5 +1,5 @@
 1. Set up XML. (done)
-2. CRUD:Read - fix IO error
+2. CRUD:Read - fix IO error (done)
 3. CRUD:Delete a. On Delete Cascade
 		b. fix csrf_token (look at flask-seasurf)
 4. Auth & Auth - fix login_required decorator
