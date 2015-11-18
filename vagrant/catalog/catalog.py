@@ -568,6 +568,9 @@ def deleteBook(category_id, book_id):
             return errorMessage
     if request.method == 'POST':
         if 'delete' in request.form:
+            # delete the image from the file system
+            if '/static/images' in bookToDelete.image:
+                os.remove("." + bookToDelete.image)
             session.delete(bookToDelete)
             session.commit()
             flash('%s Successfully Deleted' % bookToDelete.title)
