@@ -1,3 +1,8 @@
+### Book Catalog Application ###
+### Written by Daniel McVicker ###
+### danielmcvicker@gmail.com ###
+### last update 11/17/2015 ###
+
 from flask import Flask, render_template, request, redirect, jsonify
 from flask import url_for, flash, make_response, session as login_session
 from werkzeug import secure_filename
@@ -6,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from database_setup import Base, Category, Book, User
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.client import FlowExchangeError
+from dict2xml import dict2xml as xmlify
 import httplib2
 import json
 import requests
@@ -18,11 +24,13 @@ import os
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 APPLICATION_NAME = "Book Catalog"
-UPLOAD_FOLDER = '/vagrant/catalog/static/images'
+UPLOAD_FOLDER = './static/images'
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'gif'])
+MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
 
 # Connect to Database and create database session
 engine = create_engine('sqlite:///bookcatalog.db')
@@ -32,7 +40,6 @@ DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
 # check uploaded files for allowed file types
-
 
 def allowed_file(filename):
     return '.' in filename and \
@@ -50,7 +57,6 @@ def showLogin():
     return render_template("login.html", STATE=state)
 
 # Google Plus OAuth2 code
-
 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
@@ -313,7 +319,28 @@ def categoriesJSON():
     categories = session.query(Category).all()
     return jsonify(categories=[r.serialize for r in categories])
 
+# XML API routes
 
+@app.route('/category/<int:category_id>/books/XML')
+def bookCategoryXML(category_id):
+    category = session.query(Category).filter_by(id=category_id).one()
+    books = session.query(Book).filter_by(category_id=category_id).all()
+    return xmlify(data=[i.serialize for i in books], wrap="booksInCategory", indent="   ")
+    
+@app.route('/category/<int:category_id>/books/<int:book_id>/XML')
+def bookXML(category_id, book_id):
+    book = session.query(Book).filter_by(id=book_id).one()
+    book = [book.serialize]
+    return xmlify(data=book, wrap="book", indent="   ")
+
+
+@app.route('/category/XML')
+def categoriesXML():
+    categories = session.query(Category).all()
+    data=[r.serialize for r in categories]
+    return xmlify(data=data, wrap="category", indent="  ")    
+    
+    
 # Core routes for application
 
 @app.route('/')
@@ -428,7 +455,7 @@ def newBook(category_id):
                     file.save(path)
                     # we need to save a slightly different version of the path
                     # in the database.
-                    dbpath = path.replace("/vagrant/catalog", "")
+                    dbpath = path.replace(".", "", 1)
             else:
                 dbpath = ""
 
@@ -509,7 +536,7 @@ def editBook(category_id, book_id):
                 file.save(path)
                 # we need to save a slightly different version of the path in
                 # the database.
-                dbpath = path.replace("/vagrant/catalog", "")
+                dbpath = path.replace(".", "", 1)
                 editedBook.image = dbpath
 
         session.add(editedBook)

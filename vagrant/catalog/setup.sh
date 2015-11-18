@@ -1,6 +1,6 @@
 #!bin/bash
 # this will wipe out your existing database. Be careful.
-# not working 10/17. Will want to come back to this -- maybe rewrite in python.
+# 
 
 echo "Verifying prerequisites"
 echo " "
