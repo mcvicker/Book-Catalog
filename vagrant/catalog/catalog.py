@@ -1,7 +1,7 @@
 ### Book Catalog Application ###
 ### Written by Daniel McVicker ###
 ### danielmcvicker@gmail.com ###
-### last update 11/17/2015 ###
+### last update 11/21/2015 ###
 
 from flask import Flask, render_template, request, redirect, jsonify
 from flask import url_for, flash, make_response, session as login_session
@@ -71,7 +71,7 @@ def showLogin():
 # Google Plus OAuth2 code
 
 @csrf.exempt
-# for now making this app route exempt 
+# for now making this app route exempt from csrf
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # validate the state token
@@ -397,12 +397,12 @@ def editCategory(category_id):
             return render_template('editCategory.html',
                                    category=editedCategory)
     else:
-        errorMessage = ('<script>window.alert'
-                        '("You do not have authorization to edit this page!")'
-                        ';</script>')
-        return errorMessage
+        flash ("You do not have authorization to edit this page!")
+        return redirect(url_for('showBooks', category_id=category_id))
 
 # Delete a category
+# Please note that deleting a category will orphan the images of the books 
+# in that category in the file system
 @app.route('/category/<int:category_id>/delete/', methods=['GET', 'POST'])
 @login_required
 def deleteCategory(category_id):
@@ -422,12 +422,10 @@ def deleteCategory(category_id):
             return render_template('deleteCategory.html',
                                    category=categoryToDelete)
     else:
-        errorMessage = ('<script>window.alert'
-                        '("You do not have authorization to delete'
-                        'this page!");</script>')
-        return errorMessage
-        # need to update this to return back to category page after throwing up
-        # error.
+        flash("You do not have permission to delete this page")
+        return redirect(url_for('showBooks', category_id=category_id)) 
+    
+        
 
 
 @app.route('/category/<int:category_id>/')
@@ -513,13 +511,8 @@ def editBook(category_id, book_id):
     # should be able to edit if you own either the category or the book.
     if login_session['user_id'] != category.user_id:
         if login_session['user_id'] != editedBook.user_id:
-            errorMessage = ('"<script>function myFunction()'
-                            '{alert(\'You are not authorized to edit books in'
-                            ' this category. You may only edit books that you'
-                            ' have created or that are in categories you have'
-                            ' created.\');}</script>'
-                            '<body onload=\'myFunction()\'\'>"')
-            return errorMessage
+            flash("You are not authorized to edit books in this category. You may only edit books that you have created or that are in categories you have created.")
+            return redirect(url_for('showBook', category_id=category_id,book_id=book_id))
     if request.method == 'POST':
         if request.form['title']:
             editedBook.title = request.form['title']
@@ -567,13 +560,9 @@ def deleteBook(category_id, book_id):
     bookToDelete = session.query(Book).filter_by(id=book_id).one()
     if login_session['user_id'] != category.user_id:
         if login_session['user_id'] != bookToDelete.user_id:
-            errorMessage = ('"<script>function myFunction() {alert(\'You are'
-                            ' not authorized to delete books in this'
-                            ' category. You may only delete books that'
-                            ' you have created or that are in categories you '
-                            ' have created.\');}</script>'
-                            ' <body onload=\'myFunction()\'\'>"')
-            return errorMessage
+            flash("You are not authorized to delete books in this category. You may only delete books that you have created or that are in categories you have created.")
+            return redirect(url_for('showBook', category_id=category_id,
+                                book_id=book_id))
     if request.method == 'POST':
         if 'delete' in request.form:
             # delete the image from the file system
