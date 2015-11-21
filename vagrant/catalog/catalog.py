@@ -6,6 +6,7 @@
 from flask import Flask, render_template, request, redirect, jsonify
 from flask import url_for, flash, make_response, session as login_session
 from flask.ext.seasurf import SeaSurf
+from functools import wraps
 from werkzeug import secure_filename
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
@@ -47,6 +48,15 @@ def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
+
+def login_required(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if 'username' not in login_session:
+                return redirect('/login')
+            return f(*args, **kwargs)
+        return decorated_function
+        
 # Create a state token to prevent request forgery.
 # Storing it in the session for later validation.
 
@@ -358,9 +368,8 @@ def showCategory():
 
 
 @app.route('/category/new/', methods=['GET', 'POST'])
+@login_required
 def newCategory():
-    if 'username' not in login_session:
-        return redirect('/login')
     if request.method == 'POST':
         newCategory = Category(binding=request.form['binding'],
                                user_id=login_session['user_id'])
@@ -374,9 +383,8 @@ def newCategory():
 
 # Edit a Category
 @app.route('/category/<int:category_id>/edit/', methods=['GET', 'POST'])
+@login_required
 def editCategory(category_id):
-    if 'username' not in login_session:
-        return redirect('/login')
     editedCategory = session.query(Category).filter_by(id=category_id).one()
     if editedCategory.user_id == login_session.get('user_id'):
         if request.method == 'POST':
@@ -396,10 +404,9 @@ def editCategory(category_id):
 
 # Delete a category
 @app.route('/category/<int:category_id>/delete/', methods=['GET', 'POST'])
+@login_required
 def deleteCategory(category_id):
     categoryToDelete = session.query(Category).filter_by(id=category_id).one()
-    if 'username' not in login_session:
-        return redirect('/login')
     if categoryToDelete.user_id == login_session.get('user_id'):
         if request.method == 'POST':
             if 'delete' in request.form:
@@ -445,9 +452,8 @@ def showBooks(category_id):
 
 # create a book
 @app.route('/category/<int:category_id>/book/new/', methods=['GET', 'POST'])
+@login_required
 def newBook(category_id):
-    if 'username' not in login_session:
-        return redirect('/login')
     category = session.query(Category).filter_by(id=category_id).one()
     if request.method == 'POST':
         if 'submit' in request.form:
@@ -499,9 +505,8 @@ def showBook(category_id, book_id):
 
 @app.route('/category/<int:category_id>/book/<int:book_id>/edit/',
            methods=['GET', 'POST'])
+@login_required
 def editBook(category_id, book_id):
-    if 'username' not in login_session:
-        return redirect('/login')
     category = session.query(Category).filter_by(id=category_id).one()
     editedBook = session.query(Book).filter_by(id=book_id).one()
     categories = session.query(Category).order_by(asc(Category.binding))
@@ -556,9 +561,8 @@ def editBook(category_id, book_id):
 
 @app.route('/category/<int:category_id>/books/<int:book_id>/delete/',
            methods=['GET', 'POST'])
+@login_required
 def deleteBook(category_id, book_id):
-    if 'username' not in login_session:
-        return redirect('/login')
     category = session.query(Category).filter_by(id=category_id).one()
     bookToDelete = session.query(Book).filter_by(id=book_id).one()
     if login_session['user_id'] != category.user_id:

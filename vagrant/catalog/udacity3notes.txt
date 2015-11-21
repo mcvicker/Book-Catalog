@@ -1,10 +1,11 @@
 1. Set up XML. (done)
 2. CRUD:Read - fix IO error (done)
 3. CRUD:Delete a. On Delete Cascade (done)
-		b. fix csrf_token (look at flask-seasurf)
+		b. fix csrf_token (look at flask-seasurf) (done)
 4. Auth & Auth - fix login_required decorator
 5. Comments - clean up a. Header Comment
 			b. Function Headers
 			c. Above-line comment
 6. Complete readme
 7. use flash message instead of javascript
+8. DAO
