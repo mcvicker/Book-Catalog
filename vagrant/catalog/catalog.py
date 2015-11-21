@@ -5,6 +5,7 @@
 
 from flask import Flask, render_template, request, redirect, jsonify
 from flask import url_for, flash, make_response, session as login_session
+from flask.ext.seasurf import SeaSurf
 from werkzeug import secure_filename
 from sqlalchemy import create_engine, asc
 from sqlalchemy.orm import sessionmaker
@@ -31,6 +32,7 @@ MAX_CONTENT_LENGTH = 16 * 1024 * 1024
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = MAX_CONTENT_LENGTH
+csrf = SeaSurf(app)
 
 # Connect to Database and create database session
 engine = create_engine('sqlite:///bookcatalog.db')
@@ -58,6 +60,8 @@ def showLogin():
 
 # Google Plus OAuth2 code
 
+@csrf.exempt
+# for now making this app route exempt 
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
     # validate the state token
@@ -131,9 +135,9 @@ def gconnect():
     login_session['email'] = data['email']
     return completeLogin(login_session)
 
-# Facebook Login
+# Facebook Login - for now is csrf.exempt
 
-
+@csrf.exempt
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
     if request.args.get('state') != login_session['state']:
@@ -390,7 +394,7 @@ def editCategory(category_id):
                         ';</script>')
         return errorMessage
 
-
+# Delete a category
 @app.route('/category/<int:category_id>/delete/', methods=['GET', 'POST'])
 def deleteCategory(category_id):
     categoryToDelete = session.query(Category).filter_by(id=category_id).one()
@@ -439,7 +443,7 @@ def showBooks(category_id):
         return render_template('publicbooks.html', books=books,
                                category=category, creator=creator)
 
-
+# create a book
 @app.route('/category/<int:category_id>/book/new/', methods=['GET', 'POST'])
 def newBook(category_id):
     if 'username' not in login_session:

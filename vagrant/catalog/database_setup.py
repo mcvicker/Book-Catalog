@@ -36,7 +36,9 @@ class Category(Base):
     user_id = Column(Integer, ForeignKey('user.id'))
     user = relationship(User)
     books = relationship('Book', cascade='delete')
-
+    # note that deleting categories will delete any contained books
+    # this is not ideal as images will be orphaned on the file system
+    
     @property
     def serialize(self):
         """Return object data in easily serializable format"""

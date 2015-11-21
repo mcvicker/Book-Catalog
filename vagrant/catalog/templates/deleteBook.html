@@ -4,7 +4,7 @@
 <h2> Are you sure you want to delete {{book.title}}? </h2>
 
 <form action="#" method = 'post'>
-
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
 	<button type="submit" class="btn btn-default delete" id="submit" type="submit" name="delete" value="delete">
 	<span class="glyphicon glyphicon-trash" aria-hidden="true"></span>Delete</button>
 	<a href = '{{url_for('showBooks', category_id = category_id )}}'>
