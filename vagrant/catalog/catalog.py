@@ -1,7 +1,13 @@
-### Book Catalog Application ###
-### Written by Daniel McVicker ###
-### danielmcvicker@gmail.com ###
-### last update 11/21/2015 ###
+##############################################################################
+### Book Catalog Application                                               ###
+### Written by Daniel McVicker                                             ###
+### danielmcvicker@gmail.com                                               ###
+### last update 11/22/2015                                                 ### 
+### A solution for Udacity Full-Stack Nanodegree Project 3                 ###
+### Assuming you have set up the database, launching this project will     ###
+### start a web-server on http://localhost:8000 where you can see a demo   ###
+### a basic CRUD web-app.                                                  ###
+##############################################################################
 
 from flask import Flask, render_template, request, redirect, jsonify
 from flask import url_for, flash, make_response, session as login_session
@@ -44,19 +50,20 @@ session = DBSession()
 
 # check uploaded files for allowed file types
 
+
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
 def login_required(f):
-        @wraps(f)
-        def decorated_function(*args, **kwargs):
-            if 'username' not in login_session:
-                return redirect('/login')
-            return f(*args, **kwargs)
-        return decorated_function
-        
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'username' not in login_session:
+            return redirect('/login')
+        return f(*args, **kwargs)
+    return decorated_function
+
 # Create a state token to prevent request forgery.
 # Storing it in the session for later validation.
 
@@ -69,6 +76,7 @@ def showLogin():
     return render_template("login.html", STATE=state)
 
 # Google Plus OAuth2 code
+
 
 @csrf.exempt
 # for now making this app route exempt from csrf
@@ -146,6 +154,7 @@ def gconnect():
     return completeLogin(login_session)
 
 # Facebook Login - for now is csrf.exempt
+
 
 @csrf.exempt
 @app.route('/fbconnect', methods=['POST'])
@@ -335,12 +344,14 @@ def categoriesJSON():
 
 # XML API routes
 
+
 @app.route('/category/<int:category_id>/books/XML')
 def bookCategoryXML(category_id):
     category = session.query(Category).filter_by(id=category_id).one()
     books = session.query(Book).filter_by(category_id=category_id).all()
     return xmlify(data=[i.serialize for i in books], wrap="booksInCategory", indent="   ")
-    
+
+
 @app.route('/category/<int:category_id>/books/<int:book_id>/XML')
 def bookXML(category_id, book_id):
     book = session.query(Book).filter_by(id=book_id).one()
@@ -351,10 +362,10 @@ def bookXML(category_id, book_id):
 @app.route('/category/XML')
 def categoriesXML():
     categories = session.query(Category).all()
-    data=[r.serialize for r in categories]
-    return xmlify(data=data, wrap="category", indent="  ")    
-    
-    
+    data = [r.serialize for r in categories]
+    return xmlify(data=data, wrap="category", indent="  ")
+
+
 # Core routes for application
 
 @app.route('/')
@@ -397,12 +408,14 @@ def editCategory(category_id):
             return render_template('editCategory.html',
                                    category=editedCategory)
     else:
-        flash ("You do not have authorization to edit this page!")
+        flash("You do not have authorization to edit this page!")
         return redirect(url_for('showBooks', category_id=category_id))
 
 # Delete a category
-# Please note that deleting a category will orphan the images of the books 
+# Please note that deleting a category will orphan the images of the books
 # in that category in the file system
+
+
 @app.route('/category/<int:category_id>/delete/', methods=['GET', 'POST'])
 @login_required
 def deleteCategory(category_id):
@@ -414,7 +427,7 @@ def deleteCategory(category_id):
                 flash('%s Successfully Deleted' % categoryToDelete.binding)
                 session.commit()
                 return redirect(url_for('showCategory',
-                                category_id=category_id))
+                                        category_id=category_id))
             elif 'cancel' in request.form:
                 flash('Deletion of %s Canceled' % categoryToDelete.binding)
                 return redirect(url_for('showCategory'))
@@ -423,9 +436,7 @@ def deleteCategory(category_id):
                                    category=categoryToDelete)
     else:
         flash("You do not have permission to delete this page")
-        return redirect(url_for('showBooks', category_id=category_id)) 
-    
-        
+        return redirect(url_for('showBooks', category_id=category_id))
 
 
 @app.route('/category/<int:category_id>/')
@@ -449,6 +460,8 @@ def showBooks(category_id):
                                category=category, creator=creator)
 
 # create a book
+
+
 @app.route('/category/<int:category_id>/book/new/', methods=['GET', 'POST'])
 @login_required
 def newBook(category_id):
@@ -512,7 +525,7 @@ def editBook(category_id, book_id):
     if login_session['user_id'] != category.user_id:
         if login_session['user_id'] != editedBook.user_id:
             flash("You are not authorized to edit books in this category. You may only edit books that you have created or that are in categories you have created.")
-            return redirect(url_for('showBook', category_id=category_id,book_id=book_id))
+            return redirect(url_for('showBook', category_id=category_id, book_id=book_id))
     if request.method == 'POST':
         if request.form['title']:
             editedBook.title = request.form['title']
@@ -562,7 +575,7 @@ def deleteBook(category_id, book_id):
         if login_session['user_id'] != bookToDelete.user_id:
             flash("You are not authorized to delete books in this category. You may only delete books that you have created or that are in categories you have created.")
             return redirect(url_for('showBook', category_id=category_id,
-                                book_id=book_id))
+                                    book_id=book_id))
     if request.method == 'POST':
         if 'delete' in request.form:
             # delete the image from the file system
@@ -575,7 +588,7 @@ def deleteBook(category_id, book_id):
         else:
             flash('Deletion of %s Canceled' % bookToDelete.title)
             return redirect(url_for('showBook', category_id=category_id,
-                            book_id=book_id))
+                                    book_id=book_id))
     else:
         return render_template('deleteBook.html', book=bookToDelete,
                                category_id=category_id)
