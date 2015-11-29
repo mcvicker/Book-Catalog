@@ -1,10 +1,19 @@
+##############################################################################
+# Book Catalog database setup                                                #
+# Written by Daniel McVicker                                                 #
+# danielmcvicker@gmail.com                                                   #
+# last update 11/27/2015                                                     #
+# Running this file will set up the neccessary database and class            #
+# definitions to run the book catalog project.                               #
+# tested with sqlite 3 and sqlalchemy 0.8.4 Other versions may not work.     #
+##############################################################################
+
+
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, String, Binary, create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 
-# sqlite 3
-# sqlalchemy 0.8.4
 
 Base = declarative_base()
 
@@ -38,7 +47,7 @@ class Category(Base):
     books = relationship('Book', cascade='delete')
     # note that deleting categories will delete any contained books
     # this is not ideal as images will be orphaned on the file system
-    
+
     @property
     def serialize(self):
         """Return object data in easily serializable format"""

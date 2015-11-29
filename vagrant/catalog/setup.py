@@ -1,11 +1,11 @@
 ##############################################################################
-### Book Catalog Set-up file                                               ###
-### Written by Daniel McVicker                                             ###
-### danielmcvicker@gmail.com                                               ###
-### last update 11/22/2015                                                 ### 
-### This simplifies and streamlines dependency checks, and runs the        ###
-### database_setup.py and importer.py files in the proper sequence, then   ###
-### automatically starts the web services for you.                         ###
+# Book Catalog Set-up Script                                                 #
+# Written by Daniel McVicker                                                 #
+# danielmcvicker@gmail.com                                                   #
+# last update 11/22/2015                                                     #
+# This simplifies and streamlines dependency checks, runs the                #
+# database_setup.py and importer.py files in the proper sequence, then       #
+# automatically starts the web services for you.                             #
 ##############################################################################
 
 
@@ -20,20 +20,20 @@ with open("requirements.txt") as f:
     for item in f:
         item = item.strip('\n')
         dependencies.append(item)
-print dependencies 
+print dependencies
 
 pkg_resources.require(item)
 # note that pip may see a package as being installed that the pkg_resources
-# manager doesn't see. if a dependency is not met, a DistributionNotFound 
-# or VersionConflict exception is thrown. Run (sudo) pip install $package 
-# until dependency checking finishes without error.
+# manager doesn't see. if a dependency is not met, a DistributionNotFound
+# or VersionConflict exception is thrown. Run (sudo) pip install $package
+# from the shell until dependency checking finishes without error.
 
 print " "
 print "All dependencies met."
 print " "
 print "Removing existing database."
 print " "
-database="bookcatalog.db"
+database = "bookcatalog.db"
 if os.path.isfile(database):
     os.remove(database)
     print("Deleting %s database.") % database

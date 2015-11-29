@@ -1,15 +1,16 @@
 ##############################################################################
-### Book Catalog Application                                               ###
-### Written by Daniel McVicker                                             ###
-### danielmcvicker@gmail.com                                               ###
-### last update 11/22/2015                                                 ### 
-### A solution for Udacity Full-Stack Nanodegree Project 3                 ###
-### Assuming you have set up the database, launching this project will     ###
-### start a web-server on http://localhost:8000 where you can see a demo   ###
-### a basic CRUD web-app.                                                  ###
+# Book Catalog Application                                                   #
+# Written by Daniel McVicker                                                 #
+# danielmcvicker@gmail.com                                                   #
+# last update 11/28/2015                                                     #
+# A solution for Udacity Full-Stack Nanodegree Project 3                     #
+# Assuming you have set up the database, launching this file will start a    #
+# web-server on http://localhost:8000 where you can see a demo of a basic    #
+# CRUD web-app with image handling.                                          #
 ##############################################################################
 
 from flask import Flask, render_template, request, redirect, jsonify
+# session imported as login_session to prevent confusion with the db session
 from flask import url_for, flash, make_response, session as login_session
 from flask.ext.seasurf import SeaSurf
 from functools import wraps
@@ -48,15 +49,15 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-# check uploaded files for allowed file types
-
 
 def allowed_file(filename):
+    """Check file 'filename' to see if it has an allowed extension."""
     return '.' in filename and \
         filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
 def login_required(f):
+    """Requires login for a given app route function 'f'."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'username' not in login_session:
@@ -64,12 +65,11 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Create a state token to prevent request forgery.
-# Storing it in the session for later validation.
-
 
 @app.route('/login')
 def showLogin():
+    """Create a state token to prevent request forgery, storing it in the
+    session for later validation."""
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
@@ -77,11 +77,16 @@ def showLogin():
 
 # Google Plus OAuth2 code
 
+# for now making this app route exempt from csrf to fix problems documented in
+# the udacity forums
+# https://discussions.udacity.com/t/p3-extracredt-seasurf/28739/6
+# we will use our showLogin function instead.
+
 
 @csrf.exempt
-# for now making this app route exempt from csrf
 @app.route('/gconnect', methods=['POST'])
 def gconnect():
+    """Connects to Google plus using OAuth2."""
     # validate the state token
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
@@ -153,12 +158,18 @@ def gconnect():
     login_session['email'] = data['email']
     return completeLogin(login_session)
 
-# Facebook Login - for now is csrf.exempt
+# Facebook Login
+
+# for now making this app route exempt from csrf to fix problems documented in
+# the udacity forums
+# https://discussions.udacity.com/t/p3-extracredt-seasurf/28739/6
+# we will use our showLogin function instead.
 
 
 @csrf.exempt
 @app.route('/fbconnect', methods=['POST'])
 def fbconnect():
+    """Connect to facebook using OAuth2."""
     if request.args.get('state') != login_session['state']:
         response = make_response(json.dumps('Invalid state parameter.'), 401)
         response.headers['Content-Type'] = 'application/json'
@@ -214,6 +225,7 @@ def fbconnect():
 # User Helper Functions
 
 def createUser(login_session):
+    """Creates a user using login_session information from OAuth2 provider."""
     newUser = User(name=login_session['username'], email=login_session[
         'email'], image=login_session['image'])
     session.add(newUser)
@@ -223,11 +235,13 @@ def createUser(login_session):
 
 
 def getUserInfo(user_id):
+    """Queries the database using user_id for information about that user."""
     user = session.query(User).filter_by(id=user_id).one()
     return user
 
 
 def getUserID(email):
+    """Gets a user's id from the database using their email address."""
     try:
         user = session.query(User).filter_by(email=email).one()
         return user.id
@@ -236,6 +250,8 @@ def getUserID(email):
 
 
 def completeLogin(login_session):
+    """Completes the login process for all OAuth2 providers using the
+    login_session information."""
     # sees if a user exists and if not, creates a new one in the DB
     user_id = getUserID(login_session['email'])
     if not user_id:
@@ -260,6 +276,8 @@ def completeLogin(login_session):
 
 @app.route('/disconnect')
 def disconnect():
+    """Disconnects the user from the Oauth2 provider and deletes their
+    login_session information"""
     if 'provider' in login_session:
         if login_session['provider'] == 'google':
             gdisconnect()
@@ -280,6 +298,7 @@ def disconnect():
 
 @app.route('/gdisconnect')
 def gdisconnect():
+    """Disconnects a user from Google Plus."""
     # Only Disconnect a connected user
     credentials = login_session.get('credentials')
     if credentials is None:
@@ -312,6 +331,7 @@ def gdisconnect():
 
 @app.route('/fbdisconnect')
 def fbdisconnect():
+    """Disconnect a user from Facebook."""
     facebook_id = login_session['facebook_id']
     # the access token must be included to successfully log out
     access_token = login_session['access_token']
@@ -326,6 +346,7 @@ def fbdisconnect():
 # JSON APIs to view Book Information
 @app.route('/category/<int:category_id>/books/JSON')
 def bookCategoryJSON(category_id):
+    """Returns JSON for a specific category with category_id."""
     category = session.query(Category).filter_by(id=category_id).one()
     books = session.query(Book).filter_by(category_id=category_id).all()
     return jsonify(BooksInCategory=[i.serialize for i in books])
@@ -333,12 +354,15 @@ def bookCategoryJSON(category_id):
 
 @app.route('/category/<int:category_id>/books/<int:book_id>/JSON')
 def bookJSON(category_id, book_id):
+    """Returns JSON serialized information for a specific book in category_id
+    with book_id."""
     book = session.query(Book).filter_by(id=book_id).one()
     return jsonify(book=book.serialize)
 
 
 @app.route('/category/JSON')
 def categoriesJSON():
+    """Returns JSON serialized information for all categories"""
     categories = session.query(Category).all()
     return jsonify(categories=[r.serialize for r in categories])
 
@@ -347,13 +371,16 @@ def categoriesJSON():
 
 @app.route('/category/<int:category_id>/books/XML')
 def bookCategoryXML(category_id):
+    """Returns XML for a specific category with category_id."""
     category = session.query(Category).filter_by(id=category_id).one()
     books = session.query(Book).filter_by(category_id=category_id).all()
-    return xmlify(data=[i.serialize for i in books], wrap="booksInCategory", indent="   ")
+    return xmlify(data=[i.serialize for i in books], wrap="booksInCategory",
+                  indent="   ")
 
 
 @app.route('/category/<int:category_id>/books/<int:book_id>/XML')
 def bookXML(category_id, book_id):
+    """Returns XML for a specific book in category_id with id book_id."""
     book = session.query(Book).filter_by(id=book_id).one()
     book = [book.serialize]
     return xmlify(data=book, wrap="book", indent="   ")
@@ -361,26 +388,27 @@ def bookXML(category_id, book_id):
 
 @app.route('/category/XML')
 def categoriesXML():
+    """Returns XML for all categories."""
     categories = session.query(Category).all()
     data = [r.serialize for r in categories]
     return xmlify(data=data, wrap="category", indent="  ")
 
 
-# Core routes for application
+# Core web routes for application
 
 @app.route('/')
 @app.route('/category/')
 def showCategory():
+    """Shows all categories."""
     categories = session.query(Category).order_by(asc(Category.binding))
     return render_template('categories.html',
                            categories=categories, login_session=login_session)
-
-# create a new category
 
 
 @app.route('/category/new/', methods=['GET', 'POST'])
 @login_required
 def newCategory():
+    """Creates a new category."""
     if request.method == 'POST':
         newCategory = Category(binding=request.form['binding'],
                                user_id=login_session['user_id'])
@@ -396,6 +424,7 @@ def newCategory():
 @app.route('/category/<int:category_id>/edit/', methods=['GET', 'POST'])
 @login_required
 def editCategory(category_id):
+    """Edits a given category with id category_id."""
     editedCategory = session.query(Category).filter_by(id=category_id).one()
     if editedCategory.user_id == login_session.get('user_id'):
         if request.method == 'POST':
@@ -413,12 +442,14 @@ def editCategory(category_id):
 
 # Delete a category
 # Please note that deleting a category will orphan the images of the books
-# in that category in the file system
+# in that category in the file system, although database entries for the
+# books will be removed via a cascading deletion.
 
 
 @app.route('/category/<int:category_id>/delete/', methods=['GET', 'POST'])
 @login_required
 def deleteCategory(category_id):
+    """Removes a given category with id category_id"""
     categoryToDelete = session.query(Category).filter_by(id=category_id).one()
     if categoryToDelete.user_id == login_session.get('user_id'):
         if request.method == 'POST':
@@ -442,6 +473,7 @@ def deleteCategory(category_id):
 @app.route('/category/<int:category_id>/')
 @app.route('/category/<int:category_id>/books/')
 def showBooks(category_id):
+    """shows books within a given category"""
     category = session.query(Category).filter_by(id=category_id).one()
     books = session.query(Book).filter_by(
         category_id=category_id).order_by(asc(Book.title))
@@ -465,6 +497,7 @@ def showBooks(category_id):
 @app.route('/category/<int:category_id>/book/new/', methods=['GET', 'POST'])
 @login_required
 def newBook(category_id):
+    """Creates a new book"""
     category = session.query(Category).filter_by(id=category_id).one()
     if request.method == 'POST':
         if 'submit' in request.form:
@@ -501,6 +534,7 @@ def newBook(category_id):
 
 @app.route('/category/<int:category_id>/book/<int:book_id>/')
 def showBook(category_id, book_id):
+    """Displays a specific book in category_id with book_id"""
     category = session.query(Category).filter_by(id=category_id).one()
     book = session.query(Book).filter_by(id=book_id).one()
     creator = session.query(User).filter_by(id=book.user_id).one()
@@ -518,14 +552,19 @@ def showBook(category_id, book_id):
            methods=['GET', 'POST'])
 @login_required
 def editBook(category_id, book_id):
+    """Edits a specific book in category with category_id and book with
+    book_id"""
     category = session.query(Category).filter_by(id=category_id).one()
     editedBook = session.query(Book).filter_by(id=book_id).one()
     categories = session.query(Category).order_by(asc(Category.binding))
     # should be able to edit if you own either the category or the book.
     if login_session['user_id'] != category.user_id:
         if login_session['user_id'] != editedBook.user_id:
-            flash("You are not authorized to edit books in this category. You may only edit books that you have created or that are in categories you have created.")
-            return redirect(url_for('showBook', category_id=category_id, book_id=book_id))
+            flash("You are not authorized to edit books in this category. You"
+                  " may only edit books that you have created or that are in"
+                  " categories you have created.")
+            return redirect(url_for('showBook', category_id=category_id,
+                            book_id=book_id))
     if request.method == 'POST':
         if request.form['title']:
             editedBook.title = request.form['title']
@@ -543,6 +582,8 @@ def editBook(category_id, book_id):
             editedBook.published = request.form['published']
         if request.form['select']:
             editedBook.category_id = request.form['select']
+        # note that there is no good way to remove an image if one has already
+        # been selected.
         if request.files['file']:
             file = request.files['file']
             if file and allowed_file(file.filename):
@@ -569,11 +610,15 @@ def editBook(category_id, book_id):
            methods=['GET', 'POST'])
 @login_required
 def deleteBook(category_id, book_id):
+    """Deletes a specific book in category with category_id and book with
+    book_id."""
     category = session.query(Category).filter_by(id=category_id).one()
     bookToDelete = session.query(Book).filter_by(id=book_id).one()
     if login_session['user_id'] != category.user_id:
         if login_session['user_id'] != bookToDelete.user_id:
-            flash("You are not authorized to delete books in this category. You may only delete books that you have created or that are in categories you have created.")
+            flash("You are not authorized to delete books in this category. "
+                  " You may only delete books that you have created or that "
+                  " are in categories you have created.")
             return redirect(url_for('showBook', category_id=category_id,
                                     book_id=book_id))
     if request.method == 'POST':

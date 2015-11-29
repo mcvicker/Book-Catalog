@@ -1,14 +1,14 @@
 ##############################################################################
-### Book Catalog Importer                                                  ###
-### Written by Daniel McVicker                                             ###
-### danielmcvicker@gmail.com                                               ###
-### last update 11/22/2015                                                 ### 
-### importer.py imports books from a Shelfari TSV file.                    ###
-### based on the book's title, it finds each book  using google books API  ###
-### and finds an appropriate image and description for each book.          ###
-### It imports the fields from the TSV and the API into the bookcatalog.db ###
-### Note that you can't run this importer indefinitely, google has         ###
-### daily data caps.                                                       ###
+# Book Catalog Importer                                                      #
+# Written by Daniel McVicker                                                 #
+# danielmcvicker@gmail.com                                                   #
+# last update 11/22/2015                                                     #
+# importer.py imports books from a Shelfari TSV file.                        #
+# based on the book's title, it finds each book  using google books API      #
+# and finds an appropriate image and description for each book.              #
+# It imports the fields from the TSV and the API into the bookcatalog.db     #
+# Note that you can't run this importer indefinitely, google has             #
+# daily data caps.                                                           #
 ##############################################################################
 
 from __future__ import division
