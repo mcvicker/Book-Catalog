@@ -31,7 +31,8 @@ import httplib2
 import json
 # in order to grab descriptions from google books api
 
-GOOGLE_BOOKS_API = "<Insert your Google Books API key here>"
+GOOGLE_BOOKS_API = json.loads(
+    open('server_secret_key.json', 'r').read())['web']['server_key']
 
 engine = create_engine('sqlite:///bookcatalog.db')
 # Bind the engine to the metadata of the Base class so that the
