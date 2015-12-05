@@ -13,6 +13,11 @@ See the requirements.txt file for the modules and libraries I used. Note that th
 versions. You may wish to use vagrant to launch the project as it will simplify things considerably--see the directions in
 the setup section below.
 
+Note: You will need to set up a google developer's account as well as a facebook developer's account.
+This project needs a Google books-enabled Server API key from Google to enable book import functionality. 
+This project needs a client id and app secret from Google to enable Google login.
+This project needs an app id and client secret from Facebook to enable Facebook login.
+
 ####Some notable modules that were used: 
 * Flask 0.10.1
 * Flask-SeaSurf 0.2.1
@@ -34,6 +39,21 @@ See the requirements.txt file for the full list.
 
 ###Installation
 
+Edit the following files with your API information from the prerequisites step.
+
+    client_secrets.json
+
+requires Google Web Client information.
+
+    server_secret_key.json
+
+requires a Google API server key.
+
+    fb_client_secrets.json
+
+requires facebook client secrets. 
+
+More information can be found at https://developers.google.com and https://developers.facebook.com respectively.
 
 To take a look at the project, run
 
