@@ -31,6 +31,8 @@ import httplib2
 import json
 # in order to grab descriptions from google books api
 
+GOOGLE_BOOKS_API = "<Insert your Google Books API key here>"
+
 engine = create_engine('sqlite:///bookcatalog.db')
 # Bind the engine to the metadata of the Base class so that the
 # declaratives can be accessed through a DBSession instance
@@ -91,7 +93,7 @@ for index, item in enumerate(bindings, start=1):
 with open('My_Shelfari_Books.tsv', 'rb') as tsvfile:
     reader = csv.DictReader(tsvfile, delimiter=',')
     # start our count at 1 to create meaningful progress status.
-    key = "AIzaSyDalhBzXGHjJYN6rW-ry-KbjM9kbcdR6o0"
+    key = "GOOGLE_BOOKS_API"
     # our access key for the google books API
     for index, row in enumerate(reader, start=1):
         title = (row)['Title']
